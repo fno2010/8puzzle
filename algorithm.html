@@ -1,0 +1,880 @@
+<!Doctype HTML>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Demo - Puzzle 8 - Artificial Intelligence - Algorithm</title>
+	<link href="css/algorithm.css" rel="stylesheet" />
+	<link href="css/bootstrap.min.css" rel="stylesheet" />
+	<link href="css/docs.css" rel="stylesheet" />
+	<link href="css/prettify.css" rel="stylesheet" />
+	<!--link href="css/bootstrap-modal-bs3patch.css" rel="stylesheet" />
+	<link href="css/bootstrap-modal.css" rel="stylesheet" /-->
+</head>
+
+<body>
+	<header class="navbar navbar-fixed-top" role="banner">
+		<nav class = "navbar navbar-inverse" role="navigation">
+			<a class="navbar-brand" href="#">Puzzle 8</a>
+			<ul class="nav navbar-nav">
+				<li><a href="./">Home</a></li>
+				<li class="divider-vertical"></li>
+				<li class="active"><a href="#">Algorithm</a></li>
+				<li class="divider-vertical"></li>
+				<!-- <li><a href="./other.html">Other</a></li> -->
+				<!-- <li class="divider-vertical"></li> -->
+				<li><a href="#">About</a></li>
+			</ul>
+		</nav>
+	</header>
+
+	<div class="container bs-docs-container">
+		<div class="row">
+			<div class="col-md-3">
+				<div id="sidebar" class="bs-sidebar hidden-print" role="complementary">
+					<ul class="nav bs-sidenav">
+						<li>
+							<a href="#struct">数据结构</a>
+							<ul class="nav">
+								<li>
+									<a href="#struct-status">状态结构</a>
+								</li>
+								<li>
+									<a href="#struct-node">节点结构</a>
+								</li>
+								<li>
+									<a href="#struct-change">转移结构</a>
+								</li>
+								<li>
+									<a href="#struct-distance">评估函数与距离矩阵</a>
+								</li>
+							</ul>
+						</li>
+						<li>
+							<a href="#algorithm">主要算法</a>
+							<ul class="nav">
+								<li>
+									<a href="#algorithm-dfs">深度优先算法</a>
+								</li>
+								<li>
+									<a href="#algorithm-bfs">广度优先算法</a>
+								</li>
+								<li>
+									<a href="#algorithm-astar">A*算法</a>
+								</li>
+							</ul>
+						</li>
+						<li>
+							<a href="#api">API介绍</a>
+							<ul class="nav">
+								<li>
+									<a href="#api-view">界面显示</a>
+								</li>
+								<li>
+									<a href="#api-data">数据处理</a>
+								</li>
+							</ul>
+						</li>
+						<li>
+							<a href="#program">程序示例</a>
+						</li>
+					</ul>
+				</div>
+			</div>
+			<div class="col-md-9" role="main">
+				<div class="bs-docs-section">
+					<div class="page-header">
+						<h1 id="struct">数据结构</h1>
+					</div>
+					<p class="lead">数据结构是解决算法问题的基础，八数码问题的数据结构主要由状态空间中的状态、状态的转移方式和状态空间搜索树决定。以下定义了需要用到的数据结构：</p>
+
+					<h3 id="struct-status">状态结构</h3>
+					<p>八数码问题的每一个状态都一一对应了一个0~8的排列，状态数据结构将其抽象成了一个9元素的一维数组对象。</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+var Target = [1, 2, 3, 8, 0, 4, 7, 6, 5];
+var Status = Target.concat();
+						</pre>
+					</div>
+
+					<h3 id="struct-node">节点结构</h3>
+					<p>八数码问题求解的基本思路是在状态空间中通过有效的转移方式不断扩展状态节点，最终搜索到需要的目标。我们最终得到的是一个转移方式序列，使它能实现从待解状态到目标状态的连续转移。因此，在节点信息中，只加入状态信息是不足够的。</p>
+
+					<h4>基本节点</h4>
+					<p>基本节点由两个信息组成，一个是节点表示的当前状态，一个是从待解节点到达该节点经过的转移方式序列，它由对象<code>Node</code>定义：</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+function Node(__status, __dpath) {
+    this.Status = __status.concat();
+    this.Dpath = __dpath.concat();
+}
+						</pre>
+					</div>
+
+					<h4>基本方法</h4>
+					<p>同时，我们为节点提供了方便扩展子节点的方法，<code>Next()</code>方法返回当前节点能达到的子节点集合，<code>Prev()</code>方法返回能达到当前节点的父结点集合：</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+Node.prototype.Next = function() {
+    var i = this.Status.indexOf(0);
+    var nextStatus = [];
+    var nextNode = [];
+    // if Up is enable
+    if(i < 6)
+    {
+        nextStatus = this.Status.concat();
+        nextStatus[i] = nextStatus[i+3];
+        nextStatus[i+3] = 0;
+        nextNode.push(new this.constructor(nextStatus, this.Dpath.concat(0)));
+    }
+    // if Down is enable
+    if(i > 2)
+    {
+        nextStatus = this.Status.concat();
+        nextStatus[i] = nextStatus[i-3];
+        nextStatus[i-3] = 0;
+        nextNode.push(new this.constructor(nextStatus, this.Dpath.concat(1)));
+    }
+    // if Left is enable
+    if(i%3 < 2)
+    {
+        nextStatus = this.Status.concat();
+        nextStatus[i] = nextStatus[i+1];
+        nextStatus[i+1] = 0;
+        nextNode.push(new this.constructor(nextStatus, this.Dpath.concat(2)));
+    }
+    // if Right is enable
+    if(i%3 > 0)
+    {
+        nextStatus = this.Status.concat();
+        nextStatus[i] = nextStatus[i-1];
+        nextStatus[i-1] = 0;
+        nextNode.push(new this.constructor(nextStatus, this.Dpath.concat(3)));
+    }
+
+    return nextNode;
+};
+
+Node.prototype.Prev = function() {
+    var i = this.Status.indexOf(0);
+    var prevStatus = [];
+    var prevNode = [];
+    // if Up is enable
+    if(i < 6)
+    {
+        prevStatus = this.Status.concat();
+        prevStatus[i] = prevStatus[i+3];
+        prevStatus[i+3] = 0;
+        prevNode.push(new this.constructor(prevStatus, [1].concat(this.Dpath)));
+    }
+    // if Down is enable
+    if(i > 2)
+    {
+        prevStatus = this.Status.concat();
+        prevStatus[i] = prevStatus[i-3];
+        prevStatus[i-3] = 0;
+        prevNode.push(new this.constructor(prevStatus, [0].concat(this.Dpath)));
+    }
+    // if Left is enable
+    if(i%3 < 2)
+    {
+        prevStatus = this.Status.concat();
+        prevStatus[i] = prevStatus[i+1];
+        prevStatus[i+1] = 0;
+        prevNode.push(new this.constructor(prevStatus, [3].concat(this.Dpath)));
+    }
+    // if Right is enable
+    if(i%3 > 0)
+    {
+        prevStatus = this.Status.concat();
+        prevStatus[i] = prevStatus[i-1];
+        prevStatus[i-1] = 0;
+        prevNode.push(new this.constructor(prevStatus, [2].concat(this.Dpath)));
+    }
+
+    return prevNode;
+};
+						</pre>
+					</div>
+
+					<h4>带代价评估的节点</h4>
+					<p>为了更有效的搜索，我们往往需要对当前的搜索状态进行一个代价评估。下面定义了带有代价评估的节点对象<code>ENode</code>，它继承自节点对象<code>Node</code>。其中的<code>EvalF()</code>函数请参见“代价评估与距离矩阵”，它调用了全局变量<code>__evalf</code></p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+function ENode(__status, __dpath) {
+    this.newMethod = Node;
+    this.newMethod(__status, __dpath);
+    delete this.newMethod;
+
+    this.Eval = this.EvalF();
+}
+
+ENode.prototype.Next = Node.prototype.Next;
+						</pre>
+					</div>
+
+					<h3 id="struct-change">转移结构</h3>
+					<p>转移结构无需特别定义，因为<code>Node</code>对象的<code>Next()</code>方法和<code>Prev()</code>方法已提供了相应的功能。</p>
+
+					<h3 id="struct-distance">代价评估与距离矩阵</h3>
+					<p>代价评估函数<code>Eval()</code>由两部分组成，一部分衡量从待解节点到达当前节点的代价<code>g</code>，另一部分衡量从当前节点到达目标节点的距离<code>h</code>，即<code>Eval = g + h</code>。这里的<code>g</code>我们用深度近似代替，<code>h</code>由距离矩阵定义。</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+ENode.prototype.EvalF = function() {
+    // Use Global Variable __evalf
+    var h = this.Dpath.length;
+    var i, j, temp;
+    for (i = 0; i < 9; i++) {
+        if (temp = this.Status[i]) {
+            j = Target.indexOf(temp);
+            h += __evalf[9*i+j];
+        }
+    }
+    return h;
+};
+						</pre>
+					</div>
+					
+					<p>全局变量<code>__evalf</code>表示当前正在使用的距离矩阵，同时系统预定义了两种距离可供使用，<code>evalf1</code>表示普通距离，<code>evalf2</code>表示曼哈顿距离</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+var evalf1 = [
+                0, 1, 1, 1, 1, 1, 1, 1, 1,
+                1, 0, 1, 1, 1, 1, 1, 1, 1,
+                1, 1, 0, 1, 1, 1, 1, 1, 1,
+                1, 1, 1, 0, 1, 1, 1, 1, 1,
+                1, 1, 1, 1, 0, 1, 1, 1, 1,
+                1, 1, 1, 1, 1, 0, 1, 1, 1,
+                1, 1, 1, 1, 1, 1, 0, 1, 1,
+                1, 1, 1, 1, 1, 1, 1, 0, 1,
+                1, 1, 1, 1, 1, 1, 1, 1, 0
+            ];
+
+var evalf2 = [
+                0, 1, 2, 1, 2, 3, 2, 3, 4,
+                1, 0, 1, 2, 1, 2, 3, 2, 3,
+                2, 1, 0, 3, 2, 1, 4, 3, 2,
+                1, 2, 3, 0, 1, 2, 1, 2, 3,
+                2, 1, 2, 1, 0, 1, 2, 1, 2,
+                3, 2, 1, 2, 1, 0, 3, 2, 1,
+                2, 3, 4, 1, 2, 3, 0, 1, 2,
+                3, 2, 3, 2, 1, 2, 1, 0, 1,
+                4, 3, 2, 3, 2, 1, 2, 1, 0
+            ];
+
+// The Default Value of __evalf is evalf2, You can modify it latter
+var __evalf = evalf2;
+						</pre>
+					</div>
+
+				</div>
+				<div class="bs-docs-section">
+					<div class="page-header">
+						<h1 id="algorithm">主要算法</h1>
+					</div>
+					<p class="lead">本示例程序主要使用了三类搜索算法去解决八数码问题，分别为深度优先搜索、广度优先搜索和A*搜索：</p>
+
+					<h3 id="algorithm-dfs">深度优先搜索</h3>
+					<p>深度优先搜索类似于树的先根遍历，可以用一个节点栈来实现，具体算法如下。</p>
+
+					<div class="bs-example">
+						<div style="font-size: 16px;">
+							<ul>
+								<li>设置搜索的深度界限<code>depth</code></li>
+								<li>新建节点栈<code>stack</code>，并让初始状态节点<code>Node(Status, [])</code>入栈</li>
+								<li>
+									当<code>stack</code>非空时，进行以下循环：
+									<ul>
+										<li>取<code>stack</code>栈顶元素<code>dst</code></li>
+										<li>如果<code>dst</code>为目标状态，则求解成功</li>
+										<li>否则，扩展<code>dst</code>的子节点<code>dst.Next()</code></li>
+										<li>对每个子节点，若子节点<code>dst.Next()[i]</code>未在<code>stack</code>中出现，且未超过深度界限<code>depth</code>，则入栈</li>
+									</ul>
+								</li>
+								<li>返回搜索结果，或提示求解不成功</li>
+							</ul>
+						</div>
+					</div>
+					
+					<p>下面是一段示例代码：</p>
+					<div class="highlight">
+						<pre id="code-dfs" class="prettyprint linenums"></pre>
+					</div>
+					
+					<h4>分析：</h4>
+					<p>深度优先搜索属于盲目搜索，效率较低。当深度界限设置的足够大时，总能保证能得到解，但无法保证时最优解。而当深度界限设置较小时，可能会无法搜索到解。</p>
+
+					<h3 id="algorithm-bfs">广度优先搜索</h3>
+					<p>和深度优先搜索类似，广度优先搜索也是一种盲目搜索，每次扩展当前节点的子节点。广度优先搜索是一种层次遍历，即在上一层节点未搜索完全时，不会搜索下一层节点。在实现上，使用了队列来完成搜索操作。</p>
+
+					<div class="bs-example">
+						<div style="font-size: 16px;">
+							<ul>
+								<li>新建节点队列<code>queue</code>，并让初始状态节点<code>Node(Status, [])</code>入队列</li>
+								<li>
+									当<code>queue</code>非空时，进行以下循环：
+									<ul>
+										<li>取<code>queue</code>队首元素<code>dst</code></li>
+										<li>如果<code>dst</code>为目标状态，则求解成功</li>
+										<li>否则，扩展<code>dst</code>的子节点<code>dst.Next()</code></li>
+										<li>对每个子节点，若子节点<code>dst.Next()[i]</code>未在<code>queue</code>中出现，则入队列</li>
+									</ul>
+								</li>
+								<li>返回搜索结果，或提示求解不成功</li>
+							</ul>
+						</div>
+					</div>
+					
+					<p>下面是一段示例代码：</p>
+					<div class="highlight">
+						<pre id="code-bfs" class="prettyprint linenums"></pre>
+					</div>
+					
+					<h4>分析：</h4>
+					<p>广度优先搜索同样属于盲目搜索的一种，它一定能找到最优解，但随着深度的增加，算法复杂度将成指数增长。</p>
+
+					<h3 id="algorithm-bfs">双向广度优先搜索</h3>
+					<p>只要时间充裕，广度优先搜索总能求解到最优解。但随着深度的加深，队列中的元素将成指数增加，内存空间将不堪重负。为了减少空间损耗，加快搜索速度，双向广度优先搜索提出了一种解决思路。</p>
+					<p>双向广度优先搜索使用两个节点队列，一个队列从待解状态节点向下扩展，另一个队列从目标状态节点向上扩展。当两个队列相遇时，即判断搜索成功。</p>
+
+					<div class="bs-example">
+						<div style="font-size: 16px;">
+							<ul>
+								<li>新建源节点队列<code>queue_src</code>，并让初始状态节点<code>Node(Status, [])</code>入队列</li>
+								<li>新建目标节点队列<code>queue_dst</code>，并让初始状态节点<code>Node(Target, [])</code>入队列</li>
+								<li>
+									当两个队列均非空时，进行以下循环：
+									<ul>
+										<li>取<code>queue_src</code>队首元素<code>head</code></li>
+										<li>如果<code>dst</code>状态在<code>queue_dst</code>中出现，则求解成功</li>
+										<li>否则，扩展<code>head</code>的子节点<code>head.Next()</code></li>
+										<li>对每个子节点，若子节点<code>head.Next()[i]</code>未在<code>queue_src</code>中出现，则入队列</li>
+										<li>取<code>queue_dst</code>队首元素<code>head</code></li>
+										<li>如果<code>head</code>状态在<code>queue_src</code>中出现，则求解成功</li>
+										<li>否则，扩展<code>head</code>的父节点<code>head.Prev()</code></li>
+										<li>对每个父节点，若父节点<code>head.Prev()[i]</code>未在<code>queue_dst</code>中出现，则入队列</li>
+									</ul>
+								</li>
+								<li>返回搜索结果，或提示求解不成功</li>
+							</ul>
+						</div>
+					</div>
+					
+					<p>下面是一段示例代码：</p>
+					<div class="highlight">
+						<pre id="code-tbfs" class="prettyprint linenums"></pre>
+					</div>
+					
+					<h4>分析：</h4>
+					<p>双向广度优先搜索是对广度优先搜索的优化。它的复杂度虽然也成指数增长，但相对于广度优先搜索，能将搜索深度减少一半，因此能更快搜索到解。然而在面对更高的深度时，双向广度优先搜索仍然无法应对。</p>
+
+					<h3 id="algorithm-astar">A*搜索</h3>
+					<p>上述三种均属于盲目搜索，在节点层数很高时，效率会相当的低，往往无法有效获得结果。A*算法是一种启发式搜索算法，它为每个待扩展的节点计算代价，根据代价的大小判断优先扩展哪个节点。</p>
+
+					<div class="bs-example">
+						<div style="font-size: 16px;">
+							<ul>
+								<li>新建打开节点队列<code>Open</code>，并让初始状态节点<code>ENode(Status, [])</code>入队列</li>
+								<li>新建关闭节点队列<code>Closed</code></li>
+								<li>
+									当<code>Open</code>队列非空时，进行以下循环：
+									<ul>
+										<li>取<code>Open</code>队首元素<code>dst</code></li>
+										<li>如果<code>dst</code>为目标状态，则求解成功</li>
+										<li>否则，扩展<code>dst</code>的子节点<code>dst.Next()</code></li>
+										<li>
+											对每个子节点<code>dst.Next()[i]</code>
+											<ul>
+												<li>若子节点状态在<code>Open</code>中出现，则保留<code>g</code>值较低的节点</li>
+												<li>若子节点状态在<code>Closed</code>中出现，且<code>g</code>值更低，则将该节点移入<code>Open</code>，并删去<code>Closed</code>中的重复节点</li>
+												<li>若以上两种均不满足，该子节点直接进入<code>Open</code></li>
+											</ul>
+										</li>
+										<li>按评估函数<code>Eval</code>重新排列<code>Open</code></li>
+									</ul>
+								</li>
+								<li>返回搜索结果，或提示求解不成功</li>
+							</ul>
+						</div>
+					</div>
+					
+					<p>下面是一段示例代码：</p>
+					<div class="highlight">
+						<pre id="code-astar" class="prettyprint linenums"></pre>
+					</div>
+					
+					<h4>分析：</h4>
+					<p>A*算法是经典的启发式搜索算法，与盲目搜索不同，启发式算法往往能更有效的搜索到解。不过算法的性能与所选区的启发式函数有很大关系。经验表示，采用曼哈顿距离解决八数码问题，能更有效的搜索到解。</p>
+
+				</div>
+				<div class="bs-docs-section">
+					<div class="page-header">
+						<h1 id="api">API介绍</h1>
+					</div>
+					<p class="lead">以下是一些可供使用的API及其定义，你可以在Home页的代码编辑框中调用它们，使系统做出相应的处理：</p>
+
+					<h3 id="api-view">界面显示</h3>
+					<p>以下API用于控制界面的显示：</p>
+
+					<h4><code>Show()</code></h4>
+					<p>和全局变量<code>Status</code>共同使用，显示<code>Status</code>表示的状态</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+var Cube = $(".cube");
+
+function Show() {
+    for(var i = 0; i < 9; i++)
+    {
+        Cube.eq(i).css("background-color", "white").html("");
+        Status[i] && Cube.eq(i).css("background-color", "purple").html(Status[i]);
+    }
+}
+						</pre>
+					</div>
+
+					<h4><code>MoveUp()</code></h4>
+					<p>和“向上”按钮绑定，控制方格上移</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+function MoveUp() {
+    var i = Status.indexOf(0);
+    if(i < 6)
+    {
+        Status[i] = Status[i+3];
+        Status[i+3] = 0;
+    }
+    Show();
+}
+						</pre>
+					</div>
+
+					<h4><code>MoveDown()</code></h4>
+					<p>和“向下”按钮绑定，控制方格下移</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+function MoveDown() {
+    var i = Status.indexOf(0);
+    if(i > 2)
+    {
+        Status[i] = Status[i-3];
+        Status[i-3] = 0;
+    }
+    Show();
+}
+						</pre>
+					</div>
+
+					<h4><code>MoveLeft()</code></h4>
+					<p>和“向左”按钮绑定，控制方格左移</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+function MoveLeft() {
+    var i = Status.indexOf(0);
+    if(i%3 < 2)
+    {
+        Status[i] = Status[i+1];
+        Status[i+1] = 0;
+    }
+    Show();
+}
+						</pre>
+					</div>
+
+					<h4><code>MoveRight()</code></h4>
+					<p>和“向右”按钮绑定，控制方格右移</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+function MoveRight() {
+    var i = Status.indexOf(0);
+    if(i%3 > 0)
+    {
+        Status[i] = Status[i-1];
+        Status[i-1] = 0;
+    }
+    Show();
+}
+						</pre>
+					</div>
+
+					<h4><code>Move(<i>i</i>)</code></h4>
+					<p>当<code><i>i</i></code>为数字时，控制第<code><i>i</i></code>个位置的方格向空白方格移动；当<code><i>i</i></code>为数组时，<code><i>i</i></code>表示一个转移方式的序列，它的元素必须是0, 1, 2, 3中的一个，分别表示控制方格上移、下移、左移和右移</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+function Move(i) {
+    if(typeof(i)==="number")
+    {
+        if(i > 2 && !Status[i-3])
+        {
+            Status[i-3] = Status[i];
+            Status[i] = 0;
+        }
+        if(i < 6 && !Status[i+3])
+        {
+            Status[i+3] = Status[i];
+            Status[i] = 0;
+        }
+        if(i%3 > 0 && !Status[i-1])
+        {
+            Status[i-1] = Status[i];
+            Status[i] = 0;
+        }
+        if(i%3 < 2 && !Status[i+1])
+        {
+            Status[i+1] = Status[i];
+            Status[i] = 0;
+        }
+        Show();
+    }
+    else if(typeof(i)==="object")
+    {
+        t_start = 0;
+        for(x in i)
+        {
+            switch(i[x])
+            {
+                case 0: setTimeout("MoveUp()", t_start += 500); break;
+                case 1: setTimeout("MoveDown()", t_start += 500); break;
+                case 2: setTimeout("MoveLeft()", t_start += 500); break;
+                case 3: setTimeout("MoveRight()", t_start += 500); break;
+            }
+        }
+    }
+}
+						</pre>
+					</div>
+
+					<h4><code>Result(<i>steps</i>, <i>nodes</i>, <i>path</i>)</code></h4>
+					<p>在界面上显示求解的结果，<code><i>steps</i></code>表示求解结果的步骤数，<code><i>nodes</i></code>表示求解过程中搜索过的节点数，<code><i>path</i></code>表示转移方式序列</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+function Result(__steps, __nodes, __path) {
+    $("#result-steps").html(__steps);
+    $("#result-nodes").html(__nodes);
+    Move(__path);
+}
+						</pre>
+					</div>
+
+					<h3 id="api-data">数据处理</h3>
+					<p>以下API用于进行数据处理：</p>
+
+					<h4><code>Random()</code></h4>
+					<p>产生一个随机状态，并显示</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+function Random() {
+    var temp = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+    for (var i = 0; i < 9; i++)
+    {
+        Status[i] = temp.splice(Math.floor((8.9999-i)*Math.random()), 1)[0];
+    }
+    Show();
+}
+						</pre>
+					</div>
+
+					<h4><code>Judge(<i>status</i>)</code></h4>
+					<p>判断状态<code><i>status</i></code>是否可解，返回一个布尔值</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+function Judge(__src) {
+    var src = __src.concat();
+    src.splice(__src.indexOf(0),1);
+    var judge = 0;
+    for (var i = 1; i < 8; i++)
+        for (var j = 0; j < i; j++)
+            judge ^= (src[i] < src[j]);
+    return judge;
+}
+						</pre>
+					</div>
+
+					<h4><code>Equal(<i>__src</i>, <i>__dst</i>)</code></h4>
+					<p>判断两个数组是否相等，返回一个布尔值</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+function Equal(__src, __dst) {
+    return __src.toString() == __dst.toString();
+}
+						</pre>
+					</div>
+
+					<h4><code>Include(<i>__src</i>, <i>__nodeset</i>)</code></h4>
+					<p>查找节点<code><i>__src</i></code>的状态是否在节点集合<code><i>__nodeset</i></code>中出现过，返回出现的位置，若未找到，返回-1</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+function Include(__src, __nodeset) {
+    for (var i in __nodeset)
+        if (Equal(__src.Status, __nodeset[i].Status))
+            return i;
+
+    return -1;
+}
+						</pre>
+					</div>
+
+					<h4><code>InQueue(<i>__nodeset</i>, <i>__src</i>)</code></h4>
+					<p>将节点<code><i>__src</i></code>按评估函数大小加入有序节点队列<code><i>__nodeset</i></code>中</p>
+
+					<div class="highlight">
+						<pre class="prettyprint linenums">
+function InQueue(__nodeset, __src) {
+    for (var i in __nodeset)
+    {
+        if (__nodeset[i].Eval > __src.Eval)
+        {
+            __nodeset.splice(i, 0, __src);
+            return;
+        }
+    }
+    __nodeset.push(__src);
+
+    return;
+}
+						</pre>
+					</div>
+
+				</div>
+				<div class="bs-docs-section">
+					<div class="page-header">
+						<h1 id="program">程序示例</h1>
+					</div>
+					<p class="lead">进入Home页即可查看，下面是一些运行截图：</p>
+
+					<h4>初始界面</h4>
+					<img width="100%" src="img/screen1.jpg" />
+					<h4>深度优先搜索</h4>
+					<img width="100%" src="img/screen2.jpg" />
+					<h4>广度优先搜索</h4>
+					<img width="100%" src="img/screen3.jpg" />
+					<h4>双向广度优先搜索</h4>
+					<img width="100%" src="img/screen4.jpg" />
+					<h4>A*搜索</h4>
+					<img width="100%" src="img/screen5.jpg" />
+					<h4>状态不可解</h4>
+					<img width="100%" src="img/screen6.jpg" />
+					<h4>自定义代码执行</h4>
+					<img width="100%" src="img/screen7.jpg" />
+				</div>
+			</div>
+		</div>
+	</div>
+	
+	<footer class="footer" style="margin-top: 80px;">
+		<div class="container">
+			<p class="text-muted credit">Developed by <a href="jingxuan.n.zhang@gmail.com">Jingxuan Zhang</a> of <a href="http://en.tjcities.com/">CITIES Innovation Studio</a>.</p>
+		</div>
+	</footer>
+
+	<!--Main JavaScipt Codes-->
+	<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/holder.js"></script>
+	<script src="js/application.js"></script>
+	<script src="js/prettify.js"></script>
+	<script>
+	(function(jQuery){
+		jQuery( document ).ready( function() {
+			prettyPrint();
+		});
+	}(jQuery))
+	</script>
+	<script>
+var dfs = "// Depth First Search as Follow\n" +
+"var stack = [];\n" +
+"var dst, next;\n" +
+"var i, flag = 0;\n" +
+"var count = 0;\n" +
+"var depth=5;\n" +
+"\n" +
+"stack.push(new Node(Status, []));\n" +
+"\n" +
+"while (stack!=[]) \n" +
+"{\n" +
+"    dst = stack.pop();\n" +
+"\n" +
+"    if (Equal(dst.Status, Target))\n" +
+"    {\n" +
+"        flag = 1;\n" +
+"        break;\n" +
+"    }\n" +
+"\n" +
+"    next = dst.Next();\n" +
+"\n" +
+"    for (i in next)\n" +
+"    {\n" +
+"        if (Include(next[i], stack)<0 && dst.Dpath.length<=depth)\n" +
+"        {\n" +
+"            stack.push(next[i]);\n" +
+"            count++;\n" +
+"        }\n" +
+"    }\n" +
+"}\n" +
+"\n" +
+"if (flag)\n" +
+"    Result(dst.Dpath.length, count, dst.Dpath);\n" +
+"else\n" +
+"    alert('Cannot be Solve or the Result Beyond the Depth Set');\n";
+
+var bfs = "// Common Breadth Search as Follow\n" +
+"var queue = [];\n" +
+"var dst, next;\n" +
+"var i;\n" +
+"var count = 0;\n" +
+"queue.push(new Node(Status, []));\n" +
+"\n" +
+"while (1) {\n" +
+"    dst = queue.shift();\n" +
+"\n" +
+"    if (Equal(dst.Status, Target))\n" +
+"        break;\n" +
+"\n" +
+"    next = dst.Next();\n" +
+"    for (i in next)\n" +
+"    {\n" +
+"        if (Include(next[i], queue) < 0)\n" +
+"        {\n" +
+"            queue.push(next[i]);\n" +
+"            count++;\n" +
+"        }\n" +
+"    }\n" +
+"}\n" +
+"\n" +
+"Result(dst.Dpath.length, count, dst.Dpath);\n";
+
+var tbfs = "// Two-Way Breadth Search as Follow\n" +
+"var queue_src = [];\n" +
+"var queue_dst = [];\n" +
+"var next, prev;\n" +
+"var head, dst_path;\n" +
+"var i, k;\n" +
+"var count = 0;\n" +
+"\n" +
+"queue_src.push(new Node(Status, []));\n" +
+"queue_dst.push(new Node(Target, []));\n" +
+"\n" +
+"dst_path = null;\n" +
+"\n" +
+"while (1)\n" +
+"{\n" +
+"    head = queue_src.shift();\n" +
+"\n" +
+"    if ((k = Include(head, queue_dst)) >= 0)\n" +
+"        dst_path = head.Dpath.concat(queue_dst[k].Dpath);\n" +
+"\n" +
+"    if (dst_path)\n" +
+"        break;\n" +
+"\n" +
+"    next = head.Next();\n" +
+"    for (i in next)\n" +
+"    {\n" +
+"        if (Include(next[i], queue_src) < 0)\n" +
+"        {\n" +
+"            queue_src.push(next[i]);\n" +
+"            count++;\n" +
+"        }\n" +
+"    }\n" +
+"\n" +
+"    head = queue_dst.shift();\n" +
+"\n" +
+"    if ((k = Include(head, queue_src)) >= 0)\n" +
+"        dst_path = queue_src[k].Dpath.concat(head.Dpath);\n" +
+"\n" +
+"    if (dst_path)\n" +
+"        break;\n" +
+"\n" +
+"    prev = head.Prev();\n" +
+"    for (i in prev)\n" +
+"    {\n" +
+"        if (Include(prev[i], queue_dst))\n" +
+"        {\n" +
+"            queue_dst.push(prev[i]);\n" +
+"            count++;\n" +
+"        }\n" +
+"    }\n" +
+"}\n" +
+"\n" +
+"Result(dst_path.length, count, dst_path);\n";
+
+var astar = "// A* Search as Follow\n" +
+"var Open = [];\n" +
+"var Closed = [];\n" +
+"var dst, next, tmp;\n" +
+"var i, k;\n" +
+"var count = 0;\n" +
+"\n" +
+"Open.push(new ENode(Status, []));\n" +
+"\n" +
+"while (Open!=[])\n" +
+"{\n" +
+"    dst = Open.shift();\n" +
+"    if (Equal(dst.Status, Target))\n" +
+"        break;\n" +
+"\n" +
+"    next = dst.Next();\n" +
+"    for (i in next)\n" +
+"    {\n" +
+"        if ((k = Include(next[i], Open)) > -1)\n" +
+"        {\n" +
+"            if (next[i].Dpath.length < Open[k].Dpath.length)\n" +
+"            {\n" +
+"                Open.splice(k, 1);\n" +
+"                InQueue(Open, next[i]);\n" +
+"                count++;\n" +
+"            }\n" +
+"        }\n" +
+"        else if ((k = Include(next[i], Closed)) > -1)\n" +
+"        {\n" +
+"            if (next[i].Dpath.length < Closed[k].Dpath.length)\n" +
+"            {\n" +
+"                Closed.splice(k, 1);\n" +
+"                InQueue(Open, next[i]);\n" +
+"                count++;\n" +
+"            }\n" +
+"        }\n" +
+"        else\n" +
+"        {\n" +
+"            InQueue(Open, next[i]);\n" +
+"            count++;\n" +
+"        }\n" +
+"    }\n" +
+"\n" +
+"    if ((k = Include(dst, Closed)) > -1)\n" +
+"    {\n" +
+"        if (dst.Dpath.length < Closed[k].Dpath.length)\n" +
+"        {\n" +
+"            Closed[k].Dpath = dst.Dpath;\n" +
+"            Closed[k].Eval = dst.Eval;\n" +
+"        }\n" +
+"    }\n" +
+"    else\n" +
+"    {\n" +
+"        Closed.push(dst);\n" +
+"    }\n" +
+"}\n" +
+"\n" +
+"Result(dst.Dpath.length, count, dst.Dpath);\n";
+
+$("#code-dfs").html(dfs);
+$("#code-bfs").html(bfs);
+$("#code-tbfs").html(tbfs);
+$("#code-astar").html(astar);
+	</script>
+</body>
+</html>

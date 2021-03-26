@@ -1,0 +1,331 @@
+<!Doctype HTML>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Demo - Puzzle 8 - Artificial Intelligence</title>
+	<link href="css/main.css" rel="stylesheet" />
+	<link href="css/bootstrap.min.css" rel="stylesheet" />
+	<link href="css/bootstrap-modal-bs3patch.css" rel="stylesheet" />
+	<link href="css/bootstrap-modal.css" rel="stylesheet" />
+</head>
+
+<body>
+	<header class="navbar navbar-fixed-top" role="banner">
+		<nav class = "navbar navbar-inverse" role="navigation">
+			<a class="navbar-brand" href="#">Puzzle 8</a>
+			<ul class="nav navbar-nav">
+				<li class="active"><a href="#">Home</a></li>
+				<li class="divider-vertical"></li>
+				<li><a href="./algorithm.html">Algorithm</a></li>
+				<li class="divider-vertical"></li>
+				<!-- <li><a href="./other.html">Other</a></li> -->
+				<!-- <li class="divider-vertical"></li> -->
+				<li><a href="#">About</a></li>
+			</ul>
+		</nav>
+	</header>
+
+	<div class="container" style="margin-top:80px;">
+		<div id="main-block" class="row">
+			<div class="col-md-4">
+				<!--Puzzle View-->
+				<div class="block">
+					<div id="view">
+						<table>
+							<tr>
+								<td><div id="t0" class="cube"></div></td>
+								<td><div id="t1" class="cube"></div></td>
+								<td><div id="t2" class="cube"></div></td>
+							</tr>
+							<tr>
+								<td><div id="t3" class="cube"></div></td>
+								<td><div id="t4" class="cube"></div></td>
+								<td><div id="t5" class="cube"></div></td>
+							</tr>
+							<tr>
+								<td><div id="t6" class="cube"></div></td>
+								<td><div id="t7" class="cube"></div></td>
+								<td><div id="t8" class="cube"></div></td>
+							</tr>
+						</table>
+
+						<div>
+							<h4>Search Finished: </h4>
+							<h4><b id="result-nodes">0</b> Nodes have been Searched</h4>
+							<h4><b id="result-steps">0</b> Steps Totally</h4>
+						</div>
+
+						<table>
+							<tr>
+								<td></td>
+								<td><input type="button" class="btn btn-info" id="move-up" name="move-up" value="向上" /></td>
+								<td><input type="button" class="btn btn-primary" data-toggle="modal" id="help" name="help" value="帮助" href="#help-show" /></td>
+							</tr>
+							<tr>
+								<td><input type="button" class="btn btn-info" id="move-left" name="move-left" value="向左" /></td>
+								<td><input type="button" class="btn btn-primary" id="solve" name="solve" value="求解" /></td>
+								<td><input type="button" class="btn btn-info" id="move-right" name="move-right" value="向右" /></td>
+							</tr>
+							<tr>
+								<td><input type="button" class="btn btn-primary" id="random" name="solve" value="随机" /></td>
+								<td><input type="button" class="btn btn-info" id="move-down" name="move-down" value="向下" /></td>
+								<td></td>
+							</tr>
+						</table>
+					</div>
+
+					<div id="intro-api">
+						<h3 class="text-primary">
+							<a data-toggle="modal" href="#api-show">Introduction of API >>></a>
+						</h3>
+					</div>
+
+				</div>
+
+			</div>
+			<div class="col-md-8">
+				<!--Algorithm Codes-->
+				<div class="block">
+					<ul class="nav nav-pills nav-justified" id="alTab">
+						<li class="active">
+							<a href="#al-1">Algorithm 1</a>
+						</li>
+						<li>
+							<a href="#al-2">Algorithm 2</a>
+						</li>
+						<li>
+							<a href="#al-3">Algorithm 3</a>
+						</li>
+						<li>
+							<a href="#al-4">Algorithm 4</a>
+						</li>
+						<li>
+							<a href="#editor">Editor</a>
+						</li>
+					</ul>
+					<div class="tab-content">
+						<div class="tab-pane active" id="al-1">
+							<pre id="code1"></pre>
+						</div>
+						<div class="tab-pane" id="al-2">
+							<pre id="code2"></pre>
+						</div>
+						<div class="tab-pane" id="al-3">
+							<pre id="code3"></pre>
+						</div>
+						<div class="tab-pane" id="al-4">
+							<pre id="code4"></pre>
+						</div>
+						<div class="tab-pane" id="editor">
+							<pre id="code"></pre>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+
+	<!-- Hidden Modal Windows -->
+	<div id="api-show" class="modal fade" tabindex="-1" data-width="600" style="display: none;">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+			<h4 class="modal-title">Introduction of API</h4>
+		</div>
+		<div class="modal-body">
+			<div id="api-table">
+				<table>
+					<tr>
+						<td><code>Target</code></td>
+						<td>全局变量，数组，表示方格目标状态，初始为[1, 2, 3, 8, 0, 4, 7, 6, 5]</td>
+					</tr>
+					<tr>
+						<td><code>Status</code></td>
+						<td>全局变量，数组，表示方格当前状态，初始为<code>Target</code></td>
+					</tr>
+					<tr>
+						<td><code>Show()</code></td>
+						<td>函数，将<code>Status</code>显示出来</td>
+					</tr>
+					<tr>
+						<td><code>MoveUp()</code></td>
+						<td>函数，将空白方格的下方方格上移</td>
+					</tr>
+					<tr>
+						<td><code>MoveDown()</code></td>
+						<td>函数，将空白方格的上方方格下移</td>
+					</tr>
+					<tr>
+						<td><code>MoveLeft()</code></td>
+						<td>函数，将空白方格的右方方格左移</td>
+					</tr>
+					<tr>
+						<td><code>MoveRight()</code></td>
+						<td>函数，将空白方格的左方方格右移</td>
+					</tr>
+					<tr>
+						<td><code>Move(<i>i</i>)</code></td>
+						<td>函数，将第<code><i>i</i></code>个位置（并非数字为<code><i>i</i></code>）的方格向空白移动（如果可以移动）</td>
+					</tr>
+					<tr>
+						<td><code>Move(<i>Array</i>)</code></td>
+						<td>函数，按数组<code><i>Array</i></code>中的方向序列，依次移动方格，0,1,2,3分别对应上下左右，例如<code>Move([0, 2])</code>表示做先向上移再向左移的操作</td>
+					</tr>
+					<tr>
+						<td><code>Result(<i>steps</i>, <i>nodes</i>, <i>path</i>)</code></td>
+						<td>函数，显示求解的结果，<code><i>steps</i></code>传入结果的步数，<code><i>nodes</i></code>传入搜索的节点数，<code><i>path</i></code>是方向序列，函数内部会调用<code>Move(<i>path</i>)</code></td>
+					</tr>
+					<tr>
+						<td><code>Node</code></td>
+						<td>类，<br />
+							成员变量：<br />
+							<code>Status</code> 记录节点状态<br />
+							<code>Dpath</code> 记录从初始状态经过的路径，是一个方向序列<br />
+							成员函数：<br />
+							<code>Next()</code> 该节点可以转移到的子节点集合<br />
+							<code>Prev()</code> 可以转移到该节点的节点集合
+						</td>
+					</tr>
+					<tr>
+						<td><code>ENode</code></td>
+						<td>类，继承自Node<br />
+							成员变量：<br />
+							<code>Eval</code> 记录节点的评估函数值<br />
+							成员函数：<br />
+							<code>EvalF()</code> 计算当前节点评估函数值
+						</td>
+					</tr>
+					<tr>
+						<td><code>__evalf</code></td>
+						<td>全局变量，数组，计算评估函数用的(9 x 9)距离矩阵，默认值为<code>evalf2</code>，为曼哈顿距离</td>
+					</tr>
+					<tr>
+						<td><code>Judge(<i>status</i>)</code></td>
+						<td>函数，判断一个状态是否可达到目标状态，并返回一个布尔值</td>
+					</tr>
+					<tr>
+						<td><code>Equal(<i>L1</i>, <i>L2</i>)</code></td>
+						<td>函数，判断两个数组是否相等，返回一个布尔值</td>
+					</tr>
+					<tr>
+						<td><code>Include(<i>__src</i>, <i>__nodeset</i>)</code></td>
+						<td>函数，返回节点集合<code><i>__nodeset</i></code>中与节点<code><i>__src</i></code>的状态相同的节点序号，若没有则返回-1</td>
+					</tr>
+					<tr>
+						<td><code>InQueue(<i>__nodeset</i>, <i>__src</i>)</code></td>
+						<td>函数，将节点<code><i>__src</i></code>按评估函数大小插入有序节点队列<code><i>__nodeset</i></code></td>
+					</tr>
+				</table>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<button type="button" data-dismiss="modal" class="btn btn-primary">I Know</button>
+		</div>
+	</div>
+
+	<div id="help-show" class="modal fade" tabindex="-1" data-width="500" style="display: none;">
+		<div class="modal-header">
+			<button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+			<h3 class="modal-title text-primary">Help</h3>
+		</div>
+		<div class="modal-body">
+			<div style="margin:5px 20px;font-family:黑体;font-size:16px;">
+				<p>点击和空白方格<code>相邻</code>的数字方格，可以让数字方格向空白方格移动</p>
+				<p>用左下方面板的<code>"向上"</code>、<code>"向下"</code>、<code>"向左"</code>和<code>"向右"</code>同样可以移动数字方格</p>
+				<p>点击<code>"随机"</code>按钮，会让九宫格的数字排列呈现一个随机值</p>
+				<p>点击<code>"求解"</code>按钮，右侧处于激活状态的代码框中的代码会被执行，用以求解能将当前状态还原回目标状态的步骤</p>
+				<p>点击<code>"Introduction of API"</code>，可以查看可供使用的API</p>
+				<p>右侧以展示出了一些可使用的求解算法，你可以修改它们并运行，也可以在<code>Editor</code>中亲自动手写程序运行</p>
+				<h4 class="text-center text-danger">Enjoy Yourself!</h4>
+			</div>
+		</div>
+		<div class="modal-footer">
+			<button type="button" data-dismiss="modal" class="btn btn-primary">I Know</button>
+		</div>
+	</div>
+
+	<footer class="footer" style="margin-top: 80px;">
+		<div class="container">
+			<p class="text-muted credit">Developed by <a href="jingxuan.n.zhang@gmail.com">Jingxuan Zhang</a> of <a href="http://en.tjcities.com/">CITIES Innovation Studio</a>.</p>
+		</div>
+	</footer>
+
+	<!--Main JavaScipt Codes-->
+	<script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script src="js/bootstrap-modalmanager.js"></script>
+	<script src="js/bootstrap-modal.js"></script>
+	<script src="js/ace.js"></script>
+	<script src="js/main.js"></script>
+	<!--script>
+	(function(jQuery){
+		jQuery( document ).ready( function() {
+			prettyPrint();
+		});
+	}(jQuery))
+	</script-->
+	<script>	
+	    // ACE Editor
+		var code1 = ace.edit("code1");
+		code1.setTheme("ace/theme/monokai");
+		code1.getSession().setMode("ace/mode/javascript");
+		code1.setValue(algorithm1, 1);
+		code1.setFontSize(14);
+
+		var code2 = ace.edit("code2");
+		code2.setTheme("ace/theme/monokai");
+		code2.getSession().setMode("ace/mode/javascript");
+		code2.setValue(algorithm2, 1);
+		code2.setFontSize(14);
+
+		var code3 = ace.edit("code3");
+		code3.setTheme("ace/theme/monokai");
+		code3.getSession().setMode("ace/mode/javascript");
+		code3.setValue(algorithm3, 1);
+		code3.setFontSize(14);
+
+		var code4 = ace.edit("code4");
+		code4.setTheme("ace/theme/monokai");
+		code4.getSession().setMode("ace/mode/javascript");
+		code4.setValue(algorithm4, 1);
+		code4.setFontSize(14);
+
+		var editor = ace.edit("code");
+		editor.setTheme("ace/theme/monokai");
+		editor.getSession().setMode("ace/mode/javascript");
+		editor.setValue("// Please Edit Code by yourself\n", 1);
+		editor.setFontSize(14);
+
+		// Tab
+		$("#alTab a:first").tab("show");
+		$("#alTab a").click(function(e) {
+			e.preventDefault();
+			$(this).tab("show");
+		})
+
+		// Button Click
+		$(".cube").click(function(e) {
+			Move(parseInt($(this).attr("id")[1]));
+		});
+		$("#move-up").click(MoveUp);
+	    $("#move-down").click(MoveDown);
+	    $("#move-left").click(MoveLeft);
+	    $("#move-right").click(MoveRight);
+	    $("#solve").click(function(e) {
+	    	var lista = ["#al-1", "#al-2", "#al-3", "#al-4", "#editor"];
+	    	var liste = [code1, code2, code3, code4, editor];
+	    	var curcode = liste[lista.indexOf($("#alTab li.active a").attr("href"))];
+	    	if (Judge(Status))
+	    		eval(curcode.getValue());
+	    	else
+	    		alert("Cannot be Solved!");
+	    });
+	    $("#random").click(Random);
+
+	    // Toggle
+	    $("#intro-api h3").click(function() {
+	    	// $("#api-table").slideToggle("slow");
+	    });
+	</script>
+</body>
+</html>
